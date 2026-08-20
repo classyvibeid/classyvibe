@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classyvibe Ai Director</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#141414',  // Background utama dark
+                            100: '#1C1C1C', // Card background
+                            500: '#D4AF37', // Gold Mewah (Classic Gold)
+                            600: '#AA8623', // Gold gelap untuk hover
+                            900: '#FAFAFA', // Teks utama terang
+                            border: '#333333'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styling untuk Toggle Switch - Tema Emas */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #D4AF37;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+        .toggle-checkbox {
+            right: 0;
+            z-index: 1;
+            border-color: #333;
+            transition: all 0.3s;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #222;
+        }
+        .toggle-label {
+            background-color: #333;
+            transition: all 0.3s;
+        }
+        /* Custom scrollbar mewah */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #333;
+            border-radius: 20px;
+        }
+        .upload-zone.dragover {
+            border-color: #D4AF37;
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        /* Layout Styling - Dark Luxury */
+        .panel-container {
+            background-color: #141414;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(212, 175, 55, 0.15); /* Aksen garis emas tipis */
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .section-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #D4AF37, #AA8623);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .upload-box-style {
+            background-color: #1A1A1A;
+            border: 1px dashed #404040;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .upload-box-style:hover {
+            border-color: #D4AF37;
+            background-color: #1F1F1F;
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.05);
+        }
+        
+        /* Toast Notification */
+        #toast-notification {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        #toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Custom dropdown styling for dark mode */
+        select {
+            color-scheme: dark;
+        }
+
+        /* Animasi Shake untuk Login Gagal */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-[#0A0A0A] text-brand-900 font-sans antialiased min-h-screen selection:bg-brand-500 selection:text-black relative custom-scrollbar overflow-x-hidden">
+
+    <!-- 1. GATEWAY SCREEN & SECRET BUTTON -->
+    <div id="gateway-screen" class="fixed inset-0 z-[100] bg-[#0A0A0A] flex flex-col items-center justify-center transition-all duration-1000">
+        <div class="relative group">
+            <img src="IMG_4868.JPG.jpeg" alt="Classyvibe Logo" class="w-32 h-32 rounded-3xl object-cover shadow-[0_0_40px_rgba(212,175,55,0.15)] border border-[#D4AF37]/20 transition-all duration-700 group-hover:shadow-[0_0_60px_rgba(212,175,55,0.3)]">
+            <div class="absolute inset-0 rounded-3xl bg-gradient-to-tr from-[#D4AF37]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+        </div>
+        <p class="text-[#D4AF37] tracking-[0.4em] text-[10px] mt-8 uppercase font-semibold opacity-50">System Initializing...</p>
+        
+        <!-- TOMBOL RAHASIA (Di pojok kanan bawah, transparan) -->
+        <button id="secret-trigger" class="fixed bottom-0 right-0 w-24 h-24 opacity-0 hover:opacity-10 cursor-default hover:cursor-pointer bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-[#D4AF37] via-transparent to-transparent transition-opacity duration-500 z-50" title=" "></button>
+    </div>
+
+    <!-- 2. LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-[90] bg-[#0A0A0A]/90 backdrop-blur-xl flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-700">
+        <div class="bg-[#141414] border border-[#333] p-10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] w-full max-w-md relative overflow-hidden">
+            <!-- Decorative Glow -->
+            <div class="absolute -top-20 -right-20 w-40 h-40 bg-[#D4AF37] rounded-full mix-blend-screen filter blur-[80px] opacity-10 pointer-events-none"></div>
+            
+            <div class="text-center mb-10 relative z-10">
+                <img src="IMG_4868.JPG.jpeg" alt="Logo" class="w-16 h-16 rounded-2xl mx-auto mb-5 border border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <h2 class="text-2xl font-serif text-white tracking-wide">Director Access</h2>
+                <p class="text-[10px] text-[#D4AF37] mt-2 uppercase tracking-[0.2em]">Authentication Required</p>
+            </div>
+
+            <form id="login-form" class="space-y-6 relative z-10">
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Director ID</label>
+                    <div class="relative">
+                        <i class="ph ph-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                        <input type="text" id="username" required autocomplete="off" class="w-full bg-[#0A0A0A] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block pl-12 p-4 outline-none transition-all shadow-inner" placeholder="Enter ID">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Passcode</label>
+                    <div class="relative">
+                        <i class="ph ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg"></i>
+                        <input type="password" id="password" required class="w-full bg-[#0A0A0A] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block pl-12 p-4 outline-none transition-all shadow-inner" placeholder="••••••••">
+                    </div>
+                </div>
+                
+                <div id="login-error" class="hidden bg-red-950/40 border border-red-900/50 text-red-400 text-xs text-center p-3 rounded-lg tracking-wide">
+                    Access Denied. Invalid credentials.
+                </div>
+
+                <button type="submit" id="login-btn" class="w-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] hover:from-[#C5A059] hover:via-[#D4AF37] hover:to-[#B5952F] text-black font-bold text-sm py-4 rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.2)] transition-all duration-300 uppercase tracking-widest flex items-center justify-center gap-2 bg-[length:200%_auto] hover:bg-right mt-4">
+                    Grant Access <i class="ph ph-arrow-right font-bold text-lg"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. MAIN APP (Dibungkus dalam div id="main-app" dan disembunyikan awalnya) -->
+    <div id="toast-notification" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-900/90 border border-red-500/50 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 pointer-events-none backdrop-blur-md">
+        <i class="ph ph-warning-circle text-xl text-red-400"></i>
+        <span id="toast-message" class="text-sm font-medium tracking-wide">Pesan Error</span>
+    </div>
+
+    <div id="main-app" class="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 hidden opacity-0 transition-opacity duration-1000">
+        
+        <div class="flex flex-col lg:flex-row gap-8 items-start">
+            
+            <!-- PANEL KIRI: Kontrol & Input -->
+            <div class="w-full lg:w-2/3 space-y-6 pb-20 lg:pb-0 panel-container p-6 lg:p-10 relative overflow-hidden">
+                
+                <!-- Efek cahaya (Glow) di sudut -->
+                <div class="absolute -top-32 -left-32 w-64 h-64 bg-[#D4AF37] rounded-full mix-blend-screen filter blur-[100px] opacity-10 pointer-events-none"></div>
+
+                <!-- Header -->
+                <header class="flex items-center gap-5 mb-10 border-b border-[#333] pb-8">
+                    <img src="IMG_4868.JPG.jpeg" alt="Classyvibe Logo" class="w-16 h-16 rounded-2xl object-cover shadow-[0_0_15px_rgba(212,175,55,0.2)] border border-[#D4AF37]/30">
+                    <div>
+                        <h1 class="text-3xl font-serif text-white tracking-wide">Classyvibe Ai Director</h1>
+                        <p class="text-xs text-[#D4AF37] font-medium tracking-[0.2em] uppercase mt-2">Premium Fashion Photography</p>
+                    </div>
+                </header>
+
+                <!-- BAGIAN 1: SUMBER VISUAL -->
+                <section class="mb-12">
+                    <div class="section-header">
+                        <div class="section-number">1</div>
+                        <h2 class="text-xl font-serif text-white tracking-wide">Sumber Visual</h2>
+                    </div>
+
+                    <div class="bg-[#1C1C1C] p-6 lg:p-8 rounded-2xl border border-[#333] shadow-inner">
+                        
+                        <div class="mb-8">
+                            <h3 class="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-widest mb-5 flex items-center gap-2">
+                                <i class="ph ph-camera-rotate"></i> Foto Mentahan Produk
+                            </h3>
+                            
+                            <!-- Grid Area Upload Mentahan -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="raw-photo-grid">
+                                
+                                <!-- Box: Front -->
+                                <div class="upload-zone upload-box-style relative aspect-square flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="front">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+                                        <i class="ph ph-cloud-arrow-up text-3xl text-gray-500 mb-2 group-hover:text-[#D4AF37] group-hover:-translate-y-1 transition-all duration-300"></i>
+                                        <span class="text-xs font-medium text-gray-400 group-hover:text-gray-200 transition-colors">Front</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-90 hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-2 right-2">
+                                            <button type="button" class="remove-btn bg-black/60 backdrop-blur text-gray-300 p-1.5 rounded-full hover:bg-red-500/80 hover:text-white shadow-lg transition-colors"><i class="ph ph-x text-sm"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Box: Back -->
+                                <div class="upload-zone upload-box-style relative aspect-square flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="back">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+                                        <i class="ph ph-cloud-arrow-up text-3xl text-gray-500 mb-2 group-hover:text-[#D4AF37] group-hover:-translate-y-1 transition-all duration-300"></i>
+                                        <span class="text-xs font-medium text-gray-400 group-hover:text-gray-200 transition-colors">Back</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-90 hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-2 right-2">
+                                            <button type="button" class="remove-btn bg-black/60 backdrop-blur text-gray-300 p-1.5 rounded-full hover:bg-red-500/80 hover:text-white shadow-lg transition-colors"><i class="ph ph-x text-sm"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Box: Side -->
+                                <div class="upload-zone upload-box-style relative aspect-square flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="side">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+                                        <i class="ph ph-cloud-arrow-up text-3xl text-gray-500 mb-2 group-hover:text-[#D4AF37] group-hover:-translate-y-1 transition-all duration-300"></i>
+                                        <span class="text-xs font-medium text-gray-400 group-hover:text-gray-200 transition-colors">Side</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-90 hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-2 right-2">
+                                            <button type="button" class="remove-btn bg-black/60 backdrop-blur text-gray-300 p-1.5 rounded-full hover:bg-red-500/80 hover:text-white shadow-lg transition-colors"><i class="ph ph-x text-sm"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Box: Detail/Tekstur -->
+                                <div class="upload-zone upload-box-style relative aspect-square flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="detail1">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center p-2 text-center pointer-events-none">
+                                        <i class="ph ph-cloud-arrow-up text-3xl text-gray-500 mb-2 group-hover:text-[#D4AF37] group-hover:-translate-y-1 transition-all duration-300"></i>
+                                        <span class="text-xs font-medium text-gray-400 group-hover:text-gray-200 transition-colors">Detail Kain</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-90 hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-2 right-2">
+                                            <button type="button" class="remove-btn bg-black/60 backdrop-blur text-gray-300 p-1.5 rounded-full hover:bg-red-500/80 hover:text-white shadow-lg transition-colors"><i class="ph ph-x text-sm"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Area Referensi -->
+                        <div class="pt-6 border-t border-[#333]">
+                            <h3 class="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-widest mb-5 flex items-center gap-2">
+                                <i class="ph ph-images"></i> Foto Referensi (Opsional)
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <!-- Box: Ref Wajah -->
+                                <div class="upload-zone upload-box-style relative h-28 flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="ref_face">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center text-center pointer-events-none">
+                                        <i class="ph ph-user-focus text-3xl text-gray-600 mb-2 group-hover:text-[#D4AF37] transition-colors"></i>
+                                        <span class="text-xs font-medium text-gray-400">Referensi Wajah</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-80">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                        <div class="absolute bottom-2 left-0 right-0 text-center"><button type="button" class="remove-btn text-[10px] text-white bg-red-600/80 hover:bg-red-500 px-3 py-1.5 rounded-full tracking-wider transition-colors border border-red-400/30">Hapus Wajah</button></div>
+                                    </div>
+                                </div>
+
+                                <!-- Box: Ref Props/Background -->
+                                <div class="upload-zone upload-box-style relative h-28 flex flex-col items-center justify-center cursor-pointer overflow-hidden group" data-key="ref_bg">
+                                    <input type="file" class="hidden file-input" accept="image/*">
+                                    <div class="empty-state flex flex-col items-center justify-center text-center pointer-events-none">
+                                        <i class="ph ph-image text-3xl text-gray-600 mb-2 group-hover:text-[#D4AF37] transition-colors"></i>
+                                        <span class="text-xs font-medium text-gray-400">Ref Props / Background</span>
+                                    </div>
+                                    <div class="preview-state hidden absolute inset-0 w-full h-full bg-[#111]">
+                                        <img src="" alt="Preview" class="w-full h-full object-cover preview-img opacity-80">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                        <div class="absolute bottom-2 left-0 right-0 text-center"><button type="button" class="remove-btn text-[10px] text-white bg-red-600/80 hover:bg-red-500 px-3 py-1.5 rounded-full tracking-wider transition-colors border border-red-400/30">Hapus BG</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <div class="bg-[#1C1C1C] p-6 lg:p-8 rounded-2xl shadow-inner border border-[#333] mb-12">
+                    <!-- BAGIAN 2: SPESIFIKASI PRODUK -->
+                    <div class="flex items-center justify-between mb-8 pb-4 border-b border-[#333]">
+                        <div>
+                            <h2 class="text-xl font-serif text-white tracking-wide">Spesifikasi Produk Fisik</h2>
+                        </div>
+                        <span class="text-[10px] font-bold bg-gradient-to-r from-[#D4AF37] to-[#AA8623] text-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-[0_2px_10px_rgba(212,175,55,0.3)]">Source of Truth</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Kategori Fashion</label>
+                                <select id="product-category" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="women casual dress">Pakaian Wanita (Dress/Atasan/Bawahan)</option>
+                                    <option value="men casual clothing">Pakaian Pria (Kemeja/Kaos/Celana)</option>
+                                    <option value="kids clothing">Pakaian Anak-anak</option>
+                                    <option value="muslim modest fashion hijab">Fashion Muslim / Hijab</option>
+                                    <option value="shoes or bag">Sepatu & Tas</option>
+                                    <option value="fashion accessory">Aksesoris (Kacamata, Perhiasan)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Gaya / Fitting</label>
+                                <select id="product-fit" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="regular fit">Regular Fit</option>
+                                    <option value="slim fit">Slim Fit / Ketat</option>
+                                    <option value="oversized fit">Oversized / Longgar</option>
+                                    <option value="flowy draped fit">Flowy / Jatuh</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#111] p-5 rounded-xl border border-[#333] space-y-5 mt-4">
+                            <!-- Toggles -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-200 tracking-wide">Strict Product Mode</p>
+                                    <p class="text-[11px] text-[#D4AF37]/80 mt-1">Prioritaskan desain 100% mirip foto mentahan</p>
+                                </div>
+                                <div class="relative inline-block w-11 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="strict-mode" class="toggle-checkbox absolute block w-6 h-6 rounded-full border-4 appearance-none cursor-pointer" checked/>
+                                    <label for="strict-mode" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
+                                </div>
+                            </div>
+                            
+                            <hr class="border-[#222]">
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-200 tracking-wide">Ignore Product Design from Reference</p>
+                                    <p class="text-[11px] text-gray-500 mt-1">Ref HANYA untuk wajah, lighting, background</p>
+                                </div>
+                                <div class="relative inline-block w-11 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="ignore-ref-design" class="toggle-checkbox absolute block w-6 h-6 rounded-full border-4 appearance-none cursor-pointer" checked/>
+                                    <label for="ignore-ref-design" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 3: LINGKUNGAN & MODEL -->
+                <section>
+                    <div class="section-header">
+                        <div class="section-number">2</div>
+                        <h2 class="text-xl font-serif text-white tracking-wide">Kamera & Lingkungan</h2>
+                    </div>
+
+                    <div class="bg-[#1C1C1C] p-6 lg:p-8 rounded-2xl shadow-inner border border-[#333] space-y-6">
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Penggunaan Model</label>
+                            <select id="model-usage" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]" onchange="toggleModelOptions()">
+                                <option value="ghost mannequin floating product, hollow neck">Tanpa Model (Hanya Produk Standalone)</option>
+                                <option value="worn by a realistic fashion model">Gunakan AI Model (Dipakai)</option>
+                                <option value="flatlay photography on a surface">Flatlay (Tersusun di permukaan)</option>
+                            </select>
+                        </div>
+
+                        <div id="model-options" class="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-[#141414] rounded-xl border border-[#333] opacity-50 pointer-events-none transition-all duration-300">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-[#D4AF37] uppercase tracking-widest mb-2">Etnis Wajah</label>
+                                <select id="model-ethnicity" class="w-full bg-[#111] border border-[#444] text-gray-300 text-xs rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-2.5 outline-none">
+                                    <option value="Indonesian">Indonesia (Wajah Lokal Indonesia)</option>
+                                    <option value="Asian / Southeast Asian">Asia (Timur/Lainnya)</option>
+                                    <option value="Caucasian">Kaukasia (Bule)</option>
+                                    <option value="faceless neck-down crop">Faceless (Potong leher)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-[#D4AF37] uppercase tracking-widest mb-2">Tipe Tubuh</label>
+                                <select id="model-body" class="w-full bg-[#111] border border-[#444] text-gray-300 text-xs rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-2.5 outline-none">
+                                    <option value="slim proportioned fashion">Slim / Proporsional</option>
+                                    <option value="curvy plus-size fashion">Curvy / Plus Size</option>
+                                    <option value="athletic fit">Athletic / Berotot</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-[#D4AF37] uppercase tracking-widest mb-2">Arah Pose</label>
+                                <select id="model-pose" class="w-full bg-[#111] border border-[#444] text-gray-300 text-xs rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-2.5 outline-none">
+                                    <option value="facing forward directly to the camera">Menghadap Depan</option>
+                                    <option value="slightly turned, 3/4 profile view">Agak Kesamping (3/4)</option>
+                                    <option value="side profile view, facing sideways">Menghadap Samping</option>
+                                    <option value="back view, facing away from camera, showing the back of the product">Menghadap Belakang</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr class="border-[#222]">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Sudut Kamera (Camera Angle)</label>
+                                <select id="camera-angle" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="eye-level straight on angle, showing full product">Eye-Level (Depan Standar)</option>
+                                    <option value="high angle looking slightly down, flattering perspective">High Angle (Atas)</option>
+                                    <option value="low angle hero shot looking slightly up, dynamic">Low Angle (Bawah)</option>
+                                    <option value="side profile angle">Side Profile (Samping)</option>
+                                    <option value="top-down flatlay angle, neatly organized">Top-Down (Flatlay)</option>
+                                    <option value="extreme close-up macro shot on the fabric and details">Close-up (Fokus Detail)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Ukuran / Aspect Ratio</label>
+                                <select id="aspect-ratio" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="1:1">1:1 (Square - Feed IG/Marketplace)</option>
+                                    <option value="3:4" selected>3:4 (Portrait - Fashion Standard)</option>
+                                    <option value="9:16">9:16 (Story/Reels/TikTok)</option>
+                                    <option value="16:9">16:9 (Landscape - Banner/Web)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Tema Latar Belakang</label>
+                            <select id="bg-theme" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                <option value="clean seamless white studio background, pure white backdrop">Studio Clean (Putih Polos)</option>
+                                <option value="aesthetic pastel studio background with minimal geometric props and soft shadows">Studio Aesthetic (Properti Minimalis)</option>
+                                <option value="modern minimalist living room or boutique interior">Boutique / Interior Modern</option>
+                                <option value="outdoor luxury city street lifestyle background, blurred background">Outdoor - Urban Luxury</option>
+                                <option value="outdoor nature bright sunlight background, blurred trees">Outdoor - Alam / Taman</option>
+                                <option value="dark moody cinematic background, luxurious dark setting">Studio Dark / Moody Luxury</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Resolusi Output</label>
+                                <select id="output-resolution" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="standard definition, clear e-commerce photo">SD (Standard)</option>
+                                    <option value="high definition, crisp details, sharp focus">HD (High Def)</option>
+                                    <option value="full hd, 1080p, highly detailed, professional photography">FHD (Full HD)</option>
+                                    <option value="4k resolution, ultra photorealistic, masterful detail, extremely sharp, high-end commercial" selected>4K (Ultra HD)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Pencahayaan</label>
+                                <select id="lighting-style" class="w-full bg-[#111] border border-[#333] text-gray-200 text-sm rounded-xl focus:ring-[#D4AF37] focus:border-[#D4AF37] block p-3.5 outline-none transition-all hover:border-[#555]">
+                                    <option value="soft natural lighting, diffused light">Soft / Natural</option>
+                                    <option value="hard high-contrast studio lighting, sharp shadows">Hard / Kontras Studio</option>
+                                    <option value="dramatic cinematic lighting, rim lighting, luxurious feel">Dramatic Cinematic / Luxury</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- PANEL KANAN: Preview & Aksi -->
+            <div class="w-full lg:w-1/3 lg:sticky lg:top-8 flex flex-col gap-5 z-10">
+                
+                <div class="bg-[#1C1C1C] p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] border border-[#333] flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/5 to-transparent pointer-events-none"></div>
+                    
+                    <button id="btn-generate" onclick="generateImageWithAI()" class="w-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] hover:from-[#C5A059] hover:via-[#D4AF37] hover:to-[#B5952F] text-black font-bold text-lg py-5 px-6 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-3 group relative overflow-hidden bg-[length:200%_auto] hover:bg-right">
+                        <span class="relative z-10 flex items-center gap-2 tracking-wide">
+                            <i class="ph ph-magic-wand text-2xl group-hover:rotate-12 transition-transform"></i>
+                            Generate Foto AI
+                        </span>
+                    </button>
+                    
+                    <p class="text-[10px] text-gray-500 mt-4 text-center flex items-center justify-center gap-1 uppercase tracking-widest font-semibold">
+                        <i class="ph ph-lightning text-[#D4AF37]"></i> Powered by Gemini Flash
+                    </p>
+                </div>
+
+                <div class="bg-[#1C1C1C] p-1 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] border border-[#333] overflow-hidden flex flex-col relative" style="min-height: 480px;">
+                    
+                    <div class="p-4 border-b border-[#333] flex justify-between items-center bg-[#111]">
+                        <span class="text-xs font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2"><i class="ph ph-monitor-play"></i> Studio Monitor</span>
+                        <div class="flex gap-1">
+                            <i class="ph ph-arrows-out-simple text-gray-500 cursor-pointer hover:text-white transition-colors"></i>
+                        </div>
+                    </div>
+
+                    <!-- State Kosong -->
+                    <div id="output-empty" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#141414]">
+                        <div class="w-20 h-20 rounded-full border border-[#333] flex items-center justify-center mb-4">
+                            <i class="ph ph-camera-slash text-3xl text-gray-600"></i>
+                        </div>
+                        <p class="text-sm text-gray-400 font-medium tracking-wide">Studio siap.<br>Menunggu instruksi visual.</p>
+                    </div>
+
+                    <!-- State Loading -->
+                    <div id="output-loading" class="hidden flex-1 flex flex-col items-center justify-center bg-[#141414]/90 absolute inset-0 z-20 backdrop-blur-md">
+                        <div class="relative w-16 h-16 flex items-center justify-center mb-6">
+                            <div class="absolute inset-0 border-4 border-[#333] rounded-full"></div>
+                            <div class="absolute inset-0 border-4 border-[#D4AF37] rounded-full border-t-transparent animate-spin"></div>
+                            <i class="ph ph-sparkle text-[#D4AF37] animate-pulse"></i>
+                        </div>
+                        <p class="text-sm font-serif text-[#D4AF37] tracking-wider animate-pulse">Merender Visual...</p>
+                        <p class="text-[10px] text-gray-400 mt-2 text-center px-4 uppercase tracking-widest" id="loading-text">Menyiapkan aset resolusi tinggi.</p>
+                    </div>
+
+                    <!-- State Error -->
+                    <div id="output-error" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#1A0505] absolute inset-0 z-20">
+                        <i class="ph ph-warning-octagon text-5xl text-red-500 mb-4 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"></i>
+                        <p class="text-base font-serif text-white tracking-wide">Proses Dibatalkan</p>
+                        <p class="text-xs text-red-400 mt-2 max-w-[80%]" id="error-text">Terjadi kesalahan sistem saat menghubungi server.</p>
+                        <button onclick="document.getElementById('output-error').classList.add('hidden')" class="mt-6 text-xs bg-red-950 border border-red-800 text-red-200 px-6 py-2 rounded-full hover:bg-red-900 transition-colors tracking-widest uppercase">Tutup</button>
+                    </div>
+
+                    <!-- State Berhasil -->
+                    <div id="output-result" class="hidden flex-1 relative group bg-black flex items-center justify-center overflow-hidden">
+                        <!-- Checkerboard pattern for transparent/png support visual -->
+                        <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;"></div>
+                        
+                        <img id="generated-image" src="" alt="Generated Fashion Product" class="relative z-10 max-w-full max-h-full object-contain shadow-2xl">
+                        
+                        <div class="absolute bottom-6 right-6 flex gap-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button onclick="downloadImage()" class="bg-[#D4AF37] text-black p-3 rounded-xl hover:bg-[#F3E5AB] transition-all shadow-[0_5px_15px_rgba(0,0,0,0.5)] transform hover:scale-105" title="Unduh Resolusi Tinggi">
+                                <i class="ph ph-download-simple text-xl font-bold"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIWAYAT GENERATE ONLINE -->
+                <div class="bg-[#1C1C1C] p-5 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] border border-[#333]">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-xs font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
+                                <i class="ph ph-cloud-arrow-up"></i> Riwayat Generate
+                            </p>
+                            <p class="text-[10px] text-gray-500 mt-1">Sinkron otomatis antar-device</p>
+                        </div>
+                        <button onclick="loadDirectorHistory()" class="text-[10px] text-gray-400 hover:text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">
+                            <i class="ph ph-arrows-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="history-list" class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+                        <p class="text-xs text-gray-600 text-center py-6">Belum ada riwayat generate.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================
+        // CLASSYVIBE DIRECTOR - SUPABASE
+        // Publishable key aman untuk dipakai di browser; Gemini key TIDAK ada di sini.
+        // ================================
+        const SUPABASE_URL = 'https://zfnbeekvlrdxjelokqnl.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_h207moNkzymMkrb-qQRSYw_UDdDFjZN';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        async function saveDirectorHistory({ prompt, aspectRatio, imageUrl }) {
+            try {
+                const { error } = await supabaseClient
+                    .from('director_history')
+                    .insert({
+                        prompt,
+                        aspect_ratio: aspectRatio,
+                        image_url: imageUrl
+                    });
+
+                if (error) throw error;
+                await loadDirectorHistory();
+                return true;
+            } catch (error) {
+                console.error('History save error:', error);
+                showToast('Gambar berhasil dibuat, tetapi riwayat gagal disimpan ke Supabase.');
+                return false;
+            }
+        }
+
+        async function loadDirectorHistory() {
+            const list = document.getElementById('history-list');
+            if (!list) return;
+
+            list.innerHTML = '<p class="text-xs text-gray-600 text-center py-6">Memuat riwayat...</p>';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('director_history')
+                    .select('id, prompt, aspect_ratio, image_url, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-600 text-center py-6">Belum ada riwayat generate.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.map(item => {
+                    const date = new Date(item.created_at).toLocaleString('id-ID', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                    });
+                    const safePrompt = String(item.prompt || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const image = item.image_url || '';
+                    return `
+                        <button type="button" onclick="openHistoryImage(${JSON.stringify(image)})" class="w-full text-left flex gap-3 p-2 rounded-xl border border-[#2b2b2b] bg-[#111] hover:border-[#D4AF37]/50 transition-all">
+                            <img src="${image}" class="w-16 h-16 rounded-lg object-cover bg-black flex-shrink-0" alt="Riwayat generate">
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-[10px] text-[#D4AF37] uppercase tracking-widest">${item.aspect_ratio || '1:1'} · ${date}</span>
+                                <span class="block text-xs text-gray-300 mt-1 line-clamp-3">${safePrompt}</span>
+                            </span>
+                        </button>`;
+                }).join('');
+            } catch (error) {
+                console.error('History load error:', error);
+                list.innerHTML = '<p class="text-xs text-red-400 text-center py-6">Riwayat gagal dimuat. Cek koneksi Supabase/RLS.</p>';
+            }
+        }
+
+        function openHistoryImage(imageUrl) {
+            if (!imageUrl) return;
+            document.getElementById('generated-image').src = imageUrl;
+            document.getElementById('output-empty').classList.add('hidden');
+            document.getElementById('output-loading').classList.add('hidden');
+            document.getElementById('output-error').classList.add('hidden');
+            document.getElementById('output-result').classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const secretBtn = document.getElementById('secret-trigger');
+            const gateway = document.getElementById('gateway-screen');
+            const loginScreen = document.getElementById('login-screen');
+            const loginForm = document.getElementById('login-form');
+            const mainApp = document.getElementById('main-app');
+
+            // 1. Logika Klik Tombol Rahasia di Pojok Kanan Bawah
+            secretBtn.addEventListener('click', () => {
+                gateway.style.opacity = '0';
+                setTimeout(() => {
+                    gateway.classList.add('hidden');
+                    loginScreen.classList.remove('hidden');
+                    // Trigger reflow untuk transisi CSS
+                    void loginScreen.offsetWidth;
+                    loginScreen.classList.remove('opacity-0');
+                }, 1000);
+            });
+
+            // 2. Logika Submit Form Login
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const user = document.getElementById('username').value;
+                const pass = document.getElementById('password').value;
+                const btn = document.getElementById('login-btn');
+                const error = document.getElementById('login-error');
+
+                // UI Status Loading
+                const originalBtnText = btn.innerHTML;
+                btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> Verifying...';
+                btn.disabled = true;
+                error.classList.add('hidden');
+
+                // Simulasi delay verifikasi server
+                setTimeout(() => {
+                    // Kredensial Hardcoded (admin / classyvibe)
+                    if(user === 'admin' && pass === 'classyvibe') {
+                        // Login Berhasil -> Transisi ke Main App
+                        loginScreen.classList.add('opacity-0');
+                        setTimeout(() => {
+                            loginScreen.classList.add('hidden');
+                            mainApp.classList.remove('hidden');
+                            void mainApp.offsetWidth;
+                            mainApp.classList.remove('opacity-0');
+                            
+                            // Inisialisasi fitur upload setelah login berhasil
+                            initUploadZones();
+                            toggleModelOptions();
+                            loadDirectorHistory();
+                        }, 700);
+                    } else {
+                        // Login Gagal -> Munculkan Error & Animasi Getar
+                        error.classList.remove('hidden');
+                        btn.innerHTML = originalBtnText;
+                        btn.disabled = false;
+                        
+                        document.querySelector('.bg-\\[\\#141414\\]').classList.add('shake-animation');
+                        setTimeout(() => document.querySelector('.bg-\\[\\#141414\\]').classList.remove('shake-animation'), 400);
+                    }
+                }, 1500);
+            });
+        });
+
+        // Objek untuk menyimpan data Base64 dari foto yang diunggah
+        const imageStore = {};
+
+        // Menampilkan notifikasi Toast custom
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // Inisialisasi Fitur Upload
+        function initUploadZones() {
+            const zones = document.querySelectorAll('.upload-zone');
+            
+            zones.forEach(zone => {
+                const input = zone.querySelector('.file-input');
+                const key = zone.dataset.key;
+                const removeBtn = zone.querySelector('.remove-btn');
+                
+                // Klik untuk upload
+                zone.addEventListener('click', (e) => {
+                    if (!e.target.closest('.remove-btn')) {
+                        input.click();
+                    }
+                });
+
+                // Proses file saat dipilih
+                input.addEventListener('change', function(e) {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        const reader = new FileReader();
+                        const emptyState = zone.querySelector('.empty-state');
+                        const previewState = zone.querySelector('.preview-state');
+                        const previewImg = zone.querySelector('.preview-img');
+                        
+                        reader.onload = function(evt) {
+                            const base64Data = evt.target.result;
+                            previewImg.src = base64Data;
+                            emptyState.classList.add('hidden');
+                            previewState.classList.remove('hidden');
+                            
+                            // Simpan ke memory untuk dikirim ke AI
+                            imageStore[key] = base64Data;
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Fitur Hapus Foto
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const emptyState = zone.querySelector('.empty-state');
+                    const previewState = zone.querySelector('.preview-state');
+                    const previewImg = zone.querySelector('.preview-img');
+
+                    input.value = '';
+                    previewImg.src = '';
+                    previewState.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    
+                    // Hapus dari memory
+                    delete imageStore[key];
+                });
+            });
+        }
+
+        function toggleModelOptions() {
+            const usage = document.getElementById('model-usage').value;
+            const optionsDiv = document.getElementById('model-options');
+            
+            if (usage.includes('model')) {
+                optionsDiv.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                optionsDiv.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        // Fungsi utama memanggil Gemini API
+        async function generateImageWithAI() {
+            // 1. Validasi Input
+            const hasRawPhoto = Object.keys(imageStore).some(key => !key.startsWith('ref_'));
+            
+            if (!hasRawPhoto) {
+                showToast("Mohon unggah minimal 1 Foto Mentahan (Front/Side/Back/Detail) produk.");
+                const grid = document.getElementById('raw-photo-grid');
+                grid.classList.add('animate-pulse');
+                setTimeout(() => grid.classList.remove('animate-pulse'), 2000);
+                return;
+            }
+
+            // 2. Persiapan UI Loading
+            const btn = document.getElementById('btn-generate');
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Merender...';
+            btn.classList.add('opacity-80', 'pointer-events-none');
+            
+            document.getElementById('output-empty').classList.add('hidden');
+            document.getElementById('output-result').classList.add('hidden');
+            document.getElementById('output-error').classList.add('hidden');
+            document.getElementById('output-loading').classList.remove('hidden');
+            
+            const loadingTextEl = document.getElementById('loading-text');
+
+            try {
+                // 3. Merangkai Prompt Spesifik
+                const category = document.getElementById('product-category').value;
+                const fit = document.getElementById('product-fit').value;
+                const cameraAngle = document.getElementById('camera-angle').value;
+                const modelUsage = document.getElementById('model-usage').value;
+                const bgTheme = document.getElementById('bg-theme').value;
+                const lighting = document.getElementById('lighting-style').value;
+                const resolutionQuality = document.getElementById('output-resolution').value;
+                const aspectRatio = document.getElementById('aspect-ratio').value;
+                
+                const isStrict = document.getElementById('strict-mode').checked;
+                const ignoreRefDesign = document.getElementById('ignore-ref-design').checked;
+                
+                let promptString = `Create a high-end, professional commercial e-commerce fashion photography shot of a ${category}. The product has a ${fit}. `;
+                
+                promptString += `The photo is taken from a ${cameraAngle}. `;
+
+                if (modelUsage.includes('model')) {
+                    const eth = document.getElementById('model-ethnicity').value;
+                    const body = document.getElementById('model-body').value;
+                    const pose = document.getElementById('model-pose').value;
+                    promptString += `The product is being perfectly ${modelUsage}, specifically an ${eth} model with a ${body} body type, and the model is ${pose}. `;
+                } else {
+                    promptString += `The product is displayed as ${modelUsage}. `;
+                }
+
+                promptString += `Set in a ${bgTheme}. Illuminate the scene with ${lighting}. `;
+                
+                // Menerapkan Kualitas Resolusi
+                promptString += `Image quality specification: ${resolutionQuality}. `;
+
+                if (isStrict) {
+                    promptString += `CRITICAL INSTRUCTION: You must STRICTLY preserve the EXACT design, color, patterns, cut, logos, and fabric texture of the product seen in the provided raw reference images. The generated clothing/product must look structurally IDENTICAL to the real product uploaded, do not invent new product details. `;
+                }
+
+                if(ignoreRefDesign && (imageStore['ref_face'] || imageStore['ref_bg'])) {
+                    promptString += `NOTE: I have provided reference images for face/background. IGNORE any product designs in those specific reference images, apply the style/lighting/background/face only to the main raw product images. `
+                }
+
+                if(imageStore['ref_face'] && modelUsage.includes('model')){
+                     promptString += `CRITICAL INSTRUCTION: Use the provided "Reference Image (Face)" as the EXACT face for the model in the generated image. The model's face must look identical to the person in the face reference image. `
+                }
+
+                promptString += `The final image must be visually stunning, realistic textures, cinematic, and ready for a marketplace product listing.`;
+
+                // 4. Menyusun Payload untuk API
+                const parts = [{ text: promptString }];
+
+                // Memasukkan semua foto yang diunggah user
+                let photoCount = 0;
+                for (const key in imageStore) {
+                    if (imageStore[key]) {
+                        photoCount++;
+                        // Ekstrak base64 murni dan mimetype
+                        const base64Data = imageStore[key].split(',')[1];
+                        const mimeType = imageStore[key].match(/data:(.*?);/)[1];
+                        
+                        // Menambahkan sedikit instruksi teks untuk setiap part gambar jika diperlukan
+                        let label = "";
+                        if(key === 'ref_face') label = "Reference Image (Face): ";
+                        else if(key.startsWith('ref_')) label = "Reference Image (Style/Lighting/Bg): ";
+                        else label = `Raw Product Image (${key}): `;
+                        
+                        parts.push({text: label});
+                        parts.push({
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: base64Data
+                            }
+                        });
+                    }
+                }
+                
+                loadingTextEl.innerText = `Menganalisa ${photoCount} input gambar & memproses AI...`;
+
+                // 5. Kirim ke Supabase Edge Function.
+                // Gemini API key disimpan sebagai secret GEMINI_API_KEY di server,
+                // sehingga tidak pernah masuk ke HTML/GitHub.
+                const images = [];
+                for (const key in imageStore) {
+                    if (!imageStore[key]) continue;
+                    const match = imageStore[key].match(/^data:(.*?);base64,(.*)$/);
+                    if (!match) continue;
+                    images.push({
+                        mimeType: match[1],
+                        data: match[2]
+                    });
+                }
+
+                const { data: functionData, error: functionError } = await supabaseClient.functions.invoke('generate-image', {
+                    body: {
+                        prompt: promptString,
+                        aspectRatio,
+                        images
+                    }
+                });
+
+                if (functionError) {
+                    let detail = functionError.message || 'Edge Function gagal dipanggil.';
+                    try {
+                        const responseBody = await functionError.context?.json?.();
+                        if (responseBody?.error) detail = responseBody.error;
+                    } catch (_) {}
+                    throw new Error(detail);
+                }
+
+                // 6. Memproses hasil dari Edge Function
+                const imageData = functionData?.image?.data;
+                const mimeType = functionData?.image?.mimeType || 'image/png';
+
+                if (!imageData) {
+                    throw new Error(functionData?.error || 'AI tidak mengembalikan gambar. Coba lagi dengan jumlah gambar yang lebih sedikit.');
+                }
+
+                const imageUrl = `data:${mimeType};base64,${imageData}`;
+
+                // Tampilkan Gambar
+                document.getElementById('generated-image').src = imageUrl;
+                document.getElementById('output-loading').classList.add('hidden');
+                document.getElementById('output-result').classList.remove('hidden');
+
+                // 7. Simpan riwayat online agar semua device melihat hasil yang sama.
+                await saveDirectorHistory({
+                    prompt: promptString,
+                    aspectRatio,
+                    imageUrl
+                });
+
+            } catch (error) {
+                console.error("Generate Error:", error);
+                document.getElementById('output-loading').classList.add('hidden');
+                document.getElementById('output-error').classList.remove('hidden');
+                document.getElementById('error-text').innerText = "Gagal membuat gambar. " + (error.message || "Silakan coba lagi.");
+            } finally {
+                // Kembalikan tombol ke semula
+                btn.innerHTML = originalBtnText;
+                btn.classList.remove('opacity-80', 'pointer-events-none');
+            }
+        }
+
+        // Fitur Download Gambar
+        function downloadImage() {
+            const imgSrc = document.getElementById('generated-image').src;
+            if(!imgSrc) return;
+            const link = document.createElement('a');
+            link.href = imgSrc;
+            link.download = `Classyvibe_AI_${new Date().getTime()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Catatan: Inisialisasi upload zone dipindahkan ke dalam logika saat login berhasil (di atas)
+
+    </script>
+</body>
+</html>
